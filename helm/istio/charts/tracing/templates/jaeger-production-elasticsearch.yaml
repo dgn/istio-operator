@@ -57,9 +57,6 @@ spec:
   storage:
     type: elasticsearch
     elasticsearch:
-{{- if .Values.jaeger.elasticsearch.image }}
-      image: {{ toYaml .Values.jaeger.elasticsearch.image }}
-{{- end }}
 {{- if .Values.jaeger.elasticsearch.nodeCount }}
       nodeCount: {{ toYaml .Values.jaeger.elasticsearch.nodeCount }}
 {{- else }}
