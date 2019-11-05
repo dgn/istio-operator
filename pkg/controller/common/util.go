@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -11,6 +12,8 @@ import (
 	"github.com/maistra/istio-operator/pkg/version"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -140,4 +143,25 @@ func GetOperatorNamespace() string {
 		log.Info("Found namespace", "Namespace", operatorNamespace)
 	})
 	return operatorNamespace
+}
+
+func GetOCPVersion(k8sClient client.Client) (string, error) {
+	clusterVersion := &unstructured.Unstructured{}
+	clusterVersion.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "config.openshift.io",
+		Version: "v1",
+		Kind:    "ClusterVersion",
+	})
+	clusterVersion.SetName("version")
+	err := k8sClient.Get(context.TODO(), client.ObjectKey{Name: clusterVersion.GetName()}, clusterVersion)
+	if err != nil {
+		return "", err
+	}
+	version, found, err := unstructured.NestedString(clusterVersion.Object, "status", "desired", "version")
+	if !found {
+		return "", fmt.Errorf("status.desired.version field not found in ClusterVersion object")
+	} else if err != nil {
+		return "", err
+	}
+	return version, nil
 }
