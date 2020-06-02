@@ -459,6 +459,11 @@ dnsConfig:
     {{- end }}
 {{- end }}
 podRedirectAnnot:
+{{ if and (.Values.sidecarInjectorWebhook.injectPodRedirectAnnot) (annotation .ObjectMeta `k8s.v1.cni.cncf.io/networks` "") }}
+   k8s.v1.cni.cncf.io/networks: "{{ annotation .ObjectMeta `k8s.v1.cni.cncf.io/networks` "" }},{{ .Values.istio_cni.istio_cni_network }}"
+{{ else if .Values.sidecarInjectorWebhook.injectPodRedirectAnnot }}
+   k8s.v1.cni.cncf.io/networks: "{{ .Values.istio_cni.istio_cni_network }}"
+{{ end }}
    sidecar.istio.io/interceptionMode: "{{ annotation .ObjectMeta `sidecar.istio.io/interceptionMode` .ProxyConfig.InterceptionMode }}"
    traffic.sidecar.istio.io/includeOutboundIPRanges: "{{ annotation .ObjectMeta `traffic.sidecar.istio.io/includeOutboundIPRanges` .Values.global.proxy.includeIPRanges }}"
    traffic.sidecar.istio.io/excludeOutboundIPRanges: "{{ annotation .ObjectMeta `traffic.sidecar.istio.io/excludeOutboundIPRanges` .Values.global.proxy.excludeIPRanges }}"

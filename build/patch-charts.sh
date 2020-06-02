@@ -255,10 +255,12 @@ function patchSidecarInjector() {
   }' ${HELM_DIR}/istio/files/injection-template.yaml
 
   # add annotation for Multus & Istio CNI
-  sed_wrap -i -e 's/^\(.*injectedAnnotations:.*\)$/\1\
-    \{\{- if .Values.istio_cni.enabled \}\}\
-      k8s.v1.cni.cncf.io\/networks: \{\{.Values.istio_cni.istio_cni_network\}\}\
-    \{\{- end \}\}/' ${HELM_DIR}/istio/templates/sidecar-injector-configmap.yaml
+  sed_wrap -i -e 's/^\(podRedirectAnnot:\)/\1\
+\{\{ if and \(\.Values\.sidecarInjectorWebhook\.injectPodRedirectAnnot\) \(annotation \.ObjectMeta `k8s\.v1\.cni\.cncf\.io\/networks` ""\) \}\}\
+   k8s\.v1\.cni\.cncf\.io\/networks: "\{\{ annotation .ObjectMeta `k8s\.v1\.cni\.cncf\.io\/networks` "" \}\},\{\{ \.Values\.istio_cni\.istio_cni_network \}\}"\
+\{\{ else if \.Values\.sidecarInjectorWebhook\.injectPodRedirectAnnot \}\}\
+   k8s\.v1\.cni\.cncf\.io\/networks: "\{\{ \.Values\.istio_cni\.istio_cni_network \}\}"\
+\{\{ end \}\}/' ${HELM_DIR}/istio/files/injection-template.yaml
 
   sed_wrap -i -e '/- name: istio-proxy/,/resources:/ {
     / *- ALL/a\
